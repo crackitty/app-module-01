@@ -4,16 +4,32 @@
 # https://aka.ms/yaml
 
 trigger:
-- master
+  branches:
+    include:
+      - main
+      - releases/*
+      - develop
+  paths:
+    exclude:
+      - Backend/CMS
+  batch: true
 
-pool:
-  name: 'charlie-mac'
-  demands:
-  - Agent.OS -equals Darwin
+resources:
+  repositories:
+    - repository: self
+    - repository: templates
+      type: git
+      name: Tools/shared-pipelines
 
 variables:
-  buildConfiguration: 'Release'
+  dockerRegistryServiceConnection: '10788c2d-887a-4d05-b118-1b4013c8301b'
 
-steps:
-- script: dotnet build --configuration $(buildConfiguration)
-  displayName: 'dotnet build $(buildConfiguration)'
+stages:
+- template: dotnet-pipeline.yml@templates
+  parameters:
+    additionalVariables:
+      projectName: 'app-module-01'
+      imageRepository: 'app-module-01'
+      dockerfilePath: '$(Build.SourcesDirectory)/Backend/Services/Indexing.API/Dockerfile'
+      tag: '$(Build.BuildId)'
+      containerRegistry: 'mtrcontainerreg.azurecr.io'
